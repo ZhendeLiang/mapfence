@@ -5,22 +5,11 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
 	<style>
-		html,
-		body,
-		#container {
-			width: 100%;
-			height: 100%;
-		}
-		
-		.longitude,
-		.latitude,
-		.editLongitude,
-		.editLatitude {
-			width: 80px;
-		}
 	</style>
 	<title>多边形的绘制和编辑</title>
 	<link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+	<link rel="stylesheet" href="/css/mapfence.css" />
+	<link rel="stylesheet" href="/css/pagination.css" />
 	<script src="https://webapi.amap.com/maps?v=1.4.10&key=b1d031fb59ba0c28daf8ce37490d2c21&plugin=AMap.PolyEditor"></script>
 	<script src="https://a.amap.com/jsapi_demos/static/demo-center/js/demoutils.js"></script>
 	<script src="/js/jquery.js"></script>
@@ -31,6 +20,45 @@
 
 <body>
 	<div id="container"></div>
+	<input type="text" id="keywords" value="博物馆" />
+	<div id="panel" class="scrollbar1">
+		<ul id="pagination-demo" class="pagination-sm pagination">
+			<li class="page-item first">
+				<a href="#" class="page-link">首页</a>
+			</li>
+			<li class="page-item next">
+				<a href="#" class="page-link">上一页</a>
+			</li>
+			<li class="page-item">
+				<a href="#" class="page-link">1</a>
+			</li>
+			<li class="page-item next">
+				<a href="#" class="page-link">下一页</a>
+			</li>
+		</ul>
+		<ul id="myList">
+			<tr th:each="user:${userlist}">
+                <td th:text="${user.id}"></td>
+                <td th:text="${user.username}"></td>
+                <td th:text="${user.password}"></td>
+                <td th:text="${user.petname}"></td>
+            </tr>
+			<li class="poibox amap-ui-markerlist-list-ele" th:each="landBlock:${LandBlocks}">
+				
+				<div class="poi-imgbox"> <span class="poi-img" style="background-image:url(http://store.is.autonavi.com/showpic/38010ecceab7b45d1ec805299cd569ce)"></span></div>
+				<div class="poi-info-left">
+					<h3 class="poi-title">[[${landBlock.name}]]</h3>
+					<div class="poi-info">
+						<p class="poi-addr">类型：[[${landBlock.type}]]</p>
+						<p class="poi-addr">状态：[[${landBlock.status}]]</p>
+						<p class="poi-addr">[[${landBlock.jsonData}]]</p>
+					</div>
+				</div>
+				<div class="clear"></div>
+			</li>
+		</ul>
+	</div>
+	
 	<div class="input-card" style="width: 250px; margin-bottom: 200px;">
 		<div id="landInfo" style="display: inline;" align="center">
 			坐标1:<br>经度<input class="longitude" value="110.35858"> 纬度
@@ -55,12 +83,9 @@
 			<button class="btn" style="margin-top: 5px" onclick="addLandBlock();">添加地块</button>
 		</div>
 	</div>
-	<div class="input-card" style="width: 370px;">
-		<div id="manageMapFence"></div>
-	</div>
 	<script type="text/javascript" th:inline="javascript">
 		$(function() {
-			var landBlockJson = [[${LandBlocks}]];
+			var landBlockJson = [[${LandBlockJson}]];
 			var landBlocks = JSON.parse(landBlockJson);
 			for(var i = 0; i < landBlocks.length; i++){
 				var pathArray = new Array();
@@ -82,11 +107,43 @@
 			zoom: 14
 		});
 
-		AMapUI.loadUI(['control/BasicControl'], function(BasicControl) {
-			//添加一个缩放控件
-			map.addControl(new BasicControl.Zoom({
-				position: 'lt'
-			}));
+		AMapUI.loadUI(['control/BasicControl', 'overlay/SvgMarker', 'misc/MarkerList'],
+				function(BasicControl, SvgMarker, MarkerList) {
+			var markerList = new MarkerList({
+	            //关联的map对象
+	            map: map,
+	            //置空默认的选中行为，后续监听selectedChanged中处理
+	            onSelected: null,
+	            //返回数据项的Id
+	            getDataId: function(dataItem, index) {
+	                //index表示该数据项在数组中的索引位置，从0开始，如果确实没有id，可以返回index代替
+	                return dataItem.id;
+	            },
+	            //返回数据项的位置信息，需要是AMap.LngLat实例，或者是经纬度数组，比如[116.789806, 39.904989]
+	            getPosition: function(dataItem) {
+	                return dataItem.position;
+	            },
+	            //返回数据项对应的Marker
+	            getMarker: function(dataItem, context, recycledMarker) {
+	                //marker的标注内容
+	                var content = '标注: ' + (context.index + 1) + '';
+	                var label = {
+	                    offset: new AMap.Pixel(16, 18), //修改label相对于marker的位置
+	                    content: content
+	                };
+	                //存在可回收利用的marker
+	                if (recycledMarker) {
+	                    //直接更新内容返回
+	                    recycledMarker.setLabel(label);
+	                    return recycledMarker;
+	                }
+	                //返回一个新的Marker
+	                return new AMap.Marker({
+	                    label: label
+	                });
+	            }
+	        });
+			
 			//缩放控件，显示Zoom值
 			map.addControl(new BasicControl.Zoom({
 				position: 'lb',
@@ -96,6 +153,64 @@
 			map.addControl(new BasicControl.LayerSwitcher({
 				position: 'rt'
 			}));
+			
+			//创建一个SquarePin，显示在选中的Marker位置
+	        var svgMarker = new SvgMarker(
+	            new SvgMarker.Shape.SquarePin({
+	                height: 60,
+	                strokeWidth: 1,
+	                strokeColor: '#ccc',
+	                fillColor: 'purple'
+	            }), {
+	                containerClassNames: 'my-svg-marker',
+	                showPositionPoint: true
+	            });
+
+	        //监听选中改变
+	        markerList.on('selectedChanged', function(event, changedInfo) {
+	            //重复选中，取消当前选中
+	            if (changedInfo.selectAgain) {
+	                this.clearSelected();
+	                return;
+	            }
+
+	            var selectedRecord = changedInfo.selected,
+	                unSelectedRecord = changedInfo.unSelected,
+	                marker;
+
+	            if (selectedRecord) {
+	                marker = selectedRecord.marker;
+	                marker.hide();
+
+	                svgMarker.setMap(marker.getMap());
+	                svgMarker.setPosition(marker.getPosition());
+	                svgMarker.setIconLabel(selectedRecord.id);
+	                svgMarker.show();
+
+	            } else {
+	                svgMarker.hide();
+	            }
+
+	            if (unSelectedRecord) {
+	                marker = unSelectedRecord.marker;
+	                marker.show();
+	            }
+
+	        });
+
+	        //构建一个数据项数组，数据项本身没有格式要求，但需要支持下述的getDataId和getPosition
+	        var data = [{
+	            id: 'A',
+	            position: [110.356005,21.278944],
+	            desc: '测试1'
+	        }, {
+	            id: 'B',
+	            position: [110.35858,21.278144],
+	            desc: '测试2'
+	        }];
+
+	        //展示该数据
+	        markerList.render(data);
 		});
 	</script>
 </body>

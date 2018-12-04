@@ -18,7 +18,8 @@ public class MapFenceController {
 	@RequestMapping(method=RequestMethod.GET)
 	public String toMapFence(ModelMap map) {
 		Gson gson = new Gson();
-		map.put("LandBlocks", gson.toJson(landBlockService.list()));
+		map.put("LandBlocks", landBlockService.list());
+		map.put("LandBlockJson", gson.toJson(landBlockService.list()));
 		return "mapfence";
 	}
 	
