@@ -1,0 +1,19 @@
+server:
+  port: 8082
+spring:
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/map-fence?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: 123
+  jpa:
+    hibernate:
+      naming: 
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      ddl-auto: update
+    show-sql: true
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: UTC

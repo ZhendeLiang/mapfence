@@ -1,0 +1,102 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+	<style>
+		html,
+		body,
+		#container {
+			width: 100%;
+			height: 100%;
+		}
+		
+		.longitude,
+		.latitude,
+		.editLongitude,
+		.editLatitude {
+			width: 80px;
+		}
+	</style>
+	<title>多边形的绘制和编辑</title>
+	<link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+	<script src="https://webapi.amap.com/maps?v=1.4.10&key=b1d031fb59ba0c28daf8ce37490d2c21&plugin=AMap.PolyEditor"></script>
+	<script src="https://a.amap.com/jsapi_demos/static/demo-center/js/demoutils.js"></script>
+	<script src="/js/jquery.js"></script>
+	<script src="/js/mapfence.js"></script>
+	<!-- UI组件库 1.0 -->
+	<script src="https://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+</head>
+
+<body>
+	<div id="container"></div>
+	<div class="input-card" style="width: 250px; margin-bottom: 200px;">
+		<div id="landInfo" style="display: inline;" align="center">
+			坐标1:<br>经度<input class="longitude" value="110.35858"> 纬度
+			<input class="latitude" value="21.278144"><br> 坐标2:<br>经度<input class="longitude" value="110.369717"> 纬度 <input class="latitude" value="21.267935"><br> 坐标3:<br>经度<input class="longitude" value="110.375961"> 纬度 <input class="latitude" value="21.274685"><br> 坐标4:<br>经度<input class="longitude" value="110.364437"> 纬度 <input class="latitude" value="21.284433"><br>
+		</div>
+		<div style="margin-top: 5px;" align="center">
+			地块名称<input id="name" name="name" type="text" style="width: 160px; margin-left: 2px; margin-bottom: 5px;"><br>
+			地块类型
+			<select id="type" name="type" style="width: 160px; margin-left: 2px; margin-bottom: 5px;">
+				<option value="0">类型1
+				<option value="1">类型2
+			</select>
+			地块数据<input id="jsonData" name="jsonData" type="text" style="width: 160px; margin-left: 2px; margin-bottom: 5px;"><br>
+			<!-- 地块样式<input id="showStyle" name="showStyle" type="text" style="width: 160px; margin-left: 2px; margin-bottom: 5px;"><br> -->
+			地块状态
+			<select id="status" name="status" style="width: 160px; margin-left: 2px; margin-bottom: 5px;">
+				<option value="0">开启
+				<option value="1">禁用
+			</select>
+			地块排序<input id="orderNo" name="orderNo" type="text" style="width: 160px; margin-left: 2px; margin-bottom: 5px;"><br>
+			地块边数<input id="sides" type="text" value="4" style="width: 100px;" onBlur="chooseSize(this);">
+			<button class="btn" style="margin-top: 5px" onclick="addLandBlock();">添加地块</button>
+		</div>
+	</div>
+	<div class="input-card" style="width: 370px;">
+		<div id="manageMapFence"></div>
+	</div>
+	<script type="text/javascript" th:inline="javascript">
+		$(function() {
+			var landBlockJson = [[${LandBlocks}]];
+			var landBlocks = JSON.parse(landBlockJson);
+			for(var i = 0; i < landBlocks.length; i++){
+				var pathArray = new Array();
+				var pathArray = landBlocks[i].latitudeAndLongitude.split(":");
+				for(var j = 0; j < pathArray.length; j++){
+					var latitudeAndLongitude = pathArray[j].split(",");
+					var longiAndLati = new Array()
+					longiAndLati[0] = latitudeAndLongitude[0];
+					longiAndLati[1] = latitudeAndLongitude[1];
+					pathArray[j] = longiAndLati;
+				}
+				create(pathArray, landBlocks[i]);
+			}
+		})
+
+		//创建地图
+		var map = new AMap.Map("container", {
+			center: [110.37, 21.27],
+			zoom: 14
+		});
+
+		AMapUI.loadUI(['control/BasicControl'], function(BasicControl) {
+			//添加一个缩放控件
+			map.addControl(new BasicControl.Zoom({
+				position: 'lt'
+			}));
+			//缩放控件，显示Zoom值
+			map.addControl(new BasicControl.Zoom({
+				position: 'lb',
+				showZoomNum: true
+			}));
+			//图层切换控件
+			map.addControl(new BasicControl.LayerSwitcher({
+				position: 'rt'
+			}));
+		});
+	</script>
+</body>
+</html>
