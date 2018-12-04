@@ -1,12 +1,23 @@
+//地块组
+var landArray = new Array();
+//地块操作组
+var polygonArray = new Array();
+
+
+/**
+ * 添加地块边数信息，obj填写边数的input框 ,flag用于区分父地块还是子地块
+ * */
 function addPosi(obj, flag) {
 	var parent = $("#landInfo");
 	var classNameLng = "longitude";
 	var classNameLat = "latitude";
+	//判断是否为子模块
 	if(flag != null && flag != "undifined" && flag == "children") {
 		parent = $("#childLandInfo");
 		classNameLng = "childLongitude";
 		classNameLat = "childLatitude";
 	}
+	//地块边数不能小于3
 	if($(obj).val() < 3) {
 		alert("不能小于三条边");
 		return;
@@ -16,15 +27,20 @@ function addPosi(obj, flag) {
 		return;
 	}
 	parent.html('');
+	//增加填入边数
 	for(var i = 0; i < $(obj).val(); i++) {
 		parent.append('坐标' + (i + 1));
 		parent.append($(':<br>经度<input class="' + classNameLng + '"> 纬度 <input class="' + classNameLat + '"><br>'));
 	}
 }
 
+/**
+ * 添加地块 posi父地块的下标
+ * */
 function addLands(posi, flag) {
 	var longitudes = $("input.longitude");
 	var latitudes = $("input.latitude");
+	//判断是否为子地块
 	var judgePoint = false;
 	var name = $("#landName").val();
 	if(flag != null && flag != "undifined" && flag == "children") {
@@ -41,9 +57,11 @@ function addLands(posi, flag) {
 		alert("地块名字不能为空");
 		return;
 	}
+	//判断如果为子地块，是否所有地块均在父地块内
 	var isSuccess = true;
+	//判断相同点数
 	var countSame = 0;
-	debugger;
+	//遍历所有经纬度
 	longitudes.each(function(index, ele) {
 		var longiAndLati = new Array()
 		longiAndLati[0] = $(longitudes[index]).val();
@@ -109,6 +127,12 @@ function addLands(posi, flag) {
 	}
 }
 
+/**
+ * 存储地块信息
+ * @param pathArray
+ * @param param
+ * @returns
+ */
 function save(pathArray, param) {
 	var polygon = new AMap.Polygon({
 		path: pathArray,
@@ -169,6 +193,12 @@ function save(pathArray, param) {
 	})
 }
 
+/**
+ * 显示地块信息
+ * @param obj
+ * @param index
+ * @returns
+ */
 function showDetails(obj, index) {
 	var details = '占地面积：' + obj.getArea() + '平方米<br>位置<br>';
 	for(var i = 0; i < obj.getPath().length; i++) {
@@ -182,11 +212,19 @@ function showDetails(obj, index) {
 	$('#landDetails').slideToggle();
 }
 
+/**
+ * 显示地块详细信息
+ * @returns
+ */
 function manageLands() {
 	$('#manageMapFence').slideToggle();
 	showManage();
 }
 
+/**
+ * 显示地块的管理信息
+ * @returns
+ */
 function showManage() {
 	$('#manageMapFence').html('');
 	$(landArray).each(function(index, ele) {
@@ -198,6 +236,11 @@ function showManage() {
 	});
 }
 
+/**
+ * 删除地块
+ * @param index
+ * @returns
+ */
 function removeLand(index) {
 	polygonArray[index].setMap(null);
 	for(var i = 0; i < landArray.length; i++) {
@@ -208,6 +251,11 @@ function removeLand(index) {
 	}
 }
 
+/**
+ * 更新地块路径信息
+ * @param index
+ * @returns
+ */
 function updateLandByPaths(index) {
 	var pathArray = new Array();
 	$("input.editLongitude").each(function(index, ele) {
@@ -220,11 +268,21 @@ function updateLandByPaths(index) {
 	landArray[index].close();
 }
 
+/**
+ * 关闭地块编辑
+ * @param index
+ * @returns
+ */
 function updateLand(index) {
 	landArray[index].close();
 	console.log(polygonArray[index].getPath().toString());
 }
 
+/**
+ * 添加子地块页面
+ * @param index
+ * @returns
+ */
 function addChildrenLand(index) {
 	$("#childDiv").show();
 	$("#childManage").html('');
