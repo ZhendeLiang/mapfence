@@ -10,17 +10,24 @@ import com.example.demo.service.LandBlockService;
 import com.google.gson.Gson;
  
 @Controller
-@RequestMapping("/mapfence")
 public class MapFenceController {
 	@Autowired
 	private LandBlockService landBlockService;
 
-	@RequestMapping(method=RequestMethod.GET)
+	@RequestMapping(value="/mapfence",method=RequestMethod.GET)
 	public String toMapFence(ModelMap map) {
 		Gson gson = new Gson();
 		map.put("LandBlocks", landBlockService.list());
 		map.put("LandBlockJson", gson.toJson(landBlockService.list()));
 		return "mapfence";
+	}
+	
+	@RequestMapping(value="/supermap",method=RequestMethod.GET)
+	public String toSuperMap(ModelMap map) {
+		Gson gson = new Gson();
+		map.put("LandBlocks", landBlockService.list());
+		map.put("LandBlockJson", gson.toJson(landBlockService.list()));
+		return "supermap";
 	}
 	
 	public LandBlockService getLandBlockService() {

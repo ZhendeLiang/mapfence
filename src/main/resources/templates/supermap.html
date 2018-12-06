@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title data-i18n="resources.title_snapDrawFeatures"></title>
+	<style type="text/css">
+        #mousePositionDiv {
+            position: absolute;
+            z-index: 9999999;
+            top: 50px;
+            font-family: Arial;
+            font-size: smaller;
+            text-align: left;
+            width: 360px;
+        }
+    </style>
+</head>
+<body style=" margin: 0;overflow: hidden;background: #fff;width: 100%;height:100%;position: absolute;top: 0;">
+	<div id='mousePositionDiv' class='smCustomControlMousePosition'></div>
+	<!-- mousePositionDiv-end -->
+	<div class='panel panel-primary editPane' id='editPane' style="z-index: 99999">
+	    <div class='panel-heading'>
+	        <h5 class='panel-title text-center' data-i18n="resources.text_drawGeometry"></h5>
+	    </div>
+	    <div class='panel-body' id='params'>
+	        <p></p>
+	        <div align='right' class='button-group'>
+	            <input type='button' id='btn1' class='btn btn-primary' data-i18n="[value]resources.text_input_value_drawPoint" onclick="draw_point()"/>
+	            <input type='button' id='btn2' class='btn btn-primary' data-i18n="[value]resources.text_input_value_drawLine" onclick="draw_line()"/>
+	            <input type='button' id='btn3' class='btn btn-primary' data-i18n="[value]resources.text_input_value_drawPolygon" onclick="draw_polygon()"/>
+	            <input type='button' id='btn4' class='btn btn-primary' data-i18n="[value]resources.text_input_value_select" onclick="selectFeature()"/>
+	            <input type='button' id='btn5' class='btn btn-primary' data-i18n="[value]resources.text_input_value_modify" onclick="modifyFeature()"/>
+	            <input type='button' id='btn6' class='btn btn-primary' value='Undo' onclick="undo()"/>
+	            <input type='button' id='btn7' class='btn btn-primary' value='Redo' onclick="redo()"/>
+	            <input type='button' id='btn8' class='btn btn-primary' data-i18n="[value]resources.text_input_value_clear" onclick="clearFeatures()"/>
+	        </div>
+	    </div>
+	</div>
+	<!-- editPane -->
+	<div id="map" style="width: 100%;height:100%"></div>
+	<!-- map-end -->
+	
+	<script type="text/javascript" include="bootstrap" src="/js/include-web.js"></script>
+	<script type="text/javascript" exclude="iclient-classic" src="/dist/classic/include-classic.js"></script>
+	<script type="text/javascript">
+		var map, layer;
+	    map = new SuperMap.Map("map", {
+	        controls: [
+	        	//比例尺控件类
+	            new SuperMap.Control.ScaleLine(),
+	        	//简单缩放控件类
+	            //new SuperMap.Control.Zoom(),
+	            //初始化复杂缩放控件类
+			    new SuperMap.Control.PanZoomBar({
+			    	// 是否固定缩放级别为[0,16]之间的整数，默认为false
+			    	forceFixedZoomLevel : true,
+			    	//是否显示滑动条，默认值为false
+			    	showSlider : true,
+			    	/*点击箭头移动地图时，所移动的距离占总距离（上下移动的总距离为高度，左右移动的总距离为宽度）
+				     的百分比，默认为null。 例如：如果slideRatio 设为0.5, 则垂直上移地图半个地图高度.*/
+			    	slideRatio : 0.5,
+			    	//设置缩放条滑块的高度，默认为120
+			    	sliderBarHeight : 180,
+			    	//设置缩放条滑块的宽度，默认为13
+			    	sliderBarWidth : 17,
+			    }),
+	            //图层切换控件类
+	            new SuperMap.Control.LayerSwitcher(),
+	            new SuperMap.Control.Navigation({
+	                dragPanOptions: {
+	                	//设置使用拖拽动画，默认为false
+	                    enableKinetic: true,
+	                }
+	            }),
+	            //鹰眼控件类
+	            new SuperMap.Control.OverviewMap({
+	            	minRectSize : 20
+	            }),
+	            //版权控件类
+	            new SuperMap.Control.Attribution()]
+	    });
+	    
+	    var options = {numZoomLevels: 12, useCanvas: false};
+	    //控制图片所属的经纬度范围
+	    var bounds = new SuperMap.Bounds(-180, -90, 180, 90);
+	    //var bounds = new SuperMap.Bounds(-18, -9, 18, 9);
+	    //初始化图层
+	    layer = new SuperMap.Layer.Image(
+	        'Demo底图-1',
+	        '/img/Day.jpg',
+	        bounds,
+	        options
+	    );
+	    //设置图层版权信息
+        layer.attribution = "powered by <a target='_self' href='#'>SuperMap</a> |detail in <a style='white-space: nowrap' target='_blank' href='#'>hy Demo</a>";
+	    //添加图层
+	    map.addLayer(layer);
+	    map.zoomToMaxExtent();
+	    //初始化中心点 经纬度/缩放程度
+	    //map.setCenter(new SuperMap.LonLat(110, 21), 2);
+	    map.setCenter(new SuperMap.LonLat(0, 0), 2);
+
+	    //添加鼠标移动时事件
+	    map.events.on({"mousemove": getMousePositionPx});
+	    setposition();
+	    addHandler(window, "resize", setposition);
+	    
+	    function getMousePositionPx(e) {
+	        var lonlat = map.getLonLatFromPixel(new SuperMap.Pixel(e.xy.x, e.xy.y));
+
+	        var newHtml = resources.text_coordinateTransformation + "<br>" + resources.text_mousePixelCoordinate + "x=" + Math.floor(e.clientX) + "，" + "y=" + Math.floor(e.clientY) +
+	            "<br>" + resources.text_positionCoordinate + "lon=" + lonlat.lon.toFixed(5) + "，" + "lat=" +
+	            lonlat.lat.toFixed(5);
+	        document.getElementById("mousePositionDiv").innerHTML = newHtml;
+	    }
+
+	    function addHandler(element, type, handler) {
+	        if (element.addEventListener) {
+	            element.addEventListener(type, handler, false);
+	        } else if (element.attachEvent) {
+	            element.attachEvent("on" + type, handler);
+	        } else {
+	            element["on" + type] = handler;
+	        }
+	    }
+
+	    function setposition() {
+	        var width = map.getSize().w;
+	        document.getElementById("mousePositionDiv").style.left = width / 2 - 160 + "px";
+	    }
+	</script>
+</body>
+</html>

@@ -1,4 +1,3 @@
-var landBlock;
 var landBlockArray = new Array;
 
 /**
@@ -52,7 +51,7 @@ function addLandBlock() {
 	if(isEmpty){
 		return "经纬度不能为空";
 	}
-	landBlock = {
+	var landBlock = {
 		name : $("#name").val(),
 		type : $("#type").val(),
 		latitudeAndLongitude : pathString,
@@ -131,7 +130,7 @@ function create(pathArray, param) {
 	// 缩放地图到合适的视野级别
 	map.setFitView([polygon]);
 	var polygonEditor = new AMap.PolyEditor(map, polygon);
-	landBlock = new Object();
+	var landBlock = new Object();
 	landBlock.id = param.id;
 	landBlock.polygon = polygon;
 	landBlock.polygonEditor = polygonEditor;
